@@ -1,0 +1,69 @@
+name: Terraform EC2 Deploy (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws_region:
+        required: false
+        type: string
+        default: 'us-east-1'
+      instance_type:
+        required: false
+        type: string
+        default: 't3.micro'
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      SSH_PRIVATE_KEY:
+        required: false
+
+jobs:
+  deploy-ec2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION  }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: Terraform Init
+        run: terraform init
+      
+      - name: Terraform Plan
+        run: terraform plan -var="instance_type=${{ inputs.instance_type }}"
+      
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        id: apply
+        run: |
+          terraform apply -auto-approve -var="instance_type=${{ inputs.instance_type }}"
+          echo "instance_ip=$(terraform output -raw instance_ip)" >> $GITHUB_OUTPUT
+      
+      - name: Wait for instance to be ready
+        run: |
+          aws ec2 wait instance-running --instance-ids $(terraform output -raw instance_id)
+          aws ec2 wait instance-status-ok --instance-ids $(terraform output -raw instance_id)
+      
+      - name: Deploy application via SSH
+        if: ${{ secrets.SSH_PRIVATE_KEY != '' }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ steps.apply.outputs.instance_ip }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /app
+            git pull
+            docker-compose up -d
