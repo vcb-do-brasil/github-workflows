@@ -23,6 +23,13 @@ on:
         required: true
       ECR_REPOSITORY:
         required: true
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy-ecs:

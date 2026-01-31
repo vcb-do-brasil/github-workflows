@@ -1,0 +1,81 @@
+name: Terraform Lambda Deploy (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws_region:
+        required: false
+        type: string
+        default: 'us-east-1'
+      function_name:
+        required: true
+        type: string
+      runtime:
+        required: false
+        type: string
+        default: 'python3.11'
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION  }}
+      
+      - name: Setup Python
+        if: startsWith(inputs.runtime, 'python')
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt -t ./package
+          cp -r src/* ./package/
+      
+      - name: Create deployment package
+        run: |
+          cd package
+          zip -r ../lambda-deployment.zip .
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: Terraform Init
+        run: terraform init
+      
+      - name: Terraform Plan
+        run: terraform plan -var="lambda_zip=lambda-deployment.zip"
+      
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve -var="lambda_zip=lambda-deployment.zip"
+      
+      - name: Invoke Lambda for smoke test
+        run: |
+          aws lambda invoke \
+            --function-name ${{ inputs.function_name }} \
+            --payload '{"test": true}' \
+            response.json
+          cat response.json

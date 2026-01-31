@@ -21,6 +21,13 @@ on:
         required: true
       SSH_PRIVATE_KEY:
         required: false
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy-ec2:
