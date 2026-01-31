@@ -2,6 +2,27 @@
 
 Coleção de workflows reutilizáveis do GitHub Actions para deploy automatizado de infraestrutura AWS usando Terraform.
 
+## ⚠️ Requisitos de Configuração
+
+Este repositório contém apenas workflows reutilizáveis e **não executa workflows automaticamente** quando há mudanças no próprio repositório. Os workflows são chamados por outros repositórios.
+
+### Proteção da Branch Main
+
+Para garantir a qualidade do código, configure as seguintes regras de proteção na branch `main`:
+
+1. **Acesse**: Settings > Branches > Add branch protection rule
+2. **Configure**:
+   - Branch name pattern: `main`
+   - ✅ Require a pull request before merging
+   - ✅ Require approvals (mínimo: 1)
+   - ✅ Require status checks to pass before merging
+   - ✅ Require branches to be up to date before merging
+   - ✅ Do not allow bypassing the above settings
+
+Estas configurações garantem que:
+- PRs só sejam merged após aprovação
+- A main só seja atualizada se os workflows forem executados com sucesso
+
 ## 📋 Workflows Disponíveis
 
 Este repositório contém 4 workflows reutilizáveis para diferentes cenários de deploy:
@@ -10,26 +31,16 @@ Este repositório contém 4 workflows reutilizáveis para diferentes cenários d
 Workflow completo para gerenciamento de infraestrutura Terraform com CI/CD.
 
 **Características:**
-- Executa automaticamente em push/PR para branch `main`
+- Workflow reutilizável que deve ser chamado por outros repositórios
 - Validação de formato, inicialização e validação do Terraform
 - Adiciona o plano do Terraform como comentário nos PRs
-- Apply automático apenas em push para `main`
-- Suporte a workflow manual (`workflow_dispatch`)
-
-**Uso:**
-```yaml
-# Configurado para rodar automaticamente
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-```
+- Aceita apenas inputs necessários (aws_region, terraform_version, working_directory)
 
 ### 2. **Terraform EC2 Deploy** (`terraform-ec2-deploy.yml`)
 Workflow reutilizável para deploy de instâncias EC2.
 
 **Características:**
+- Workflow reutilizável que deve ser chamado por outros repositórios
 - Deploy de instâncias EC2 configuráveis
 - Aguarda instância estar completamente pronta
 - Deploy de aplicação via SSH (opcional)
@@ -64,6 +75,7 @@ jobs:
 Workflow reutilizável para deploy de aplicações containerizadas no ECS.
 
 **Características:**
+- Workflow reutilizável que deve ser chamado por outros repositórios
 - Build e push de imagens Docker para ECR
 - Deploy via Terraform
 - Atualização forçada do serviço ECS
@@ -99,6 +111,7 @@ jobs:
 Workflow reutilizável para deploy de funções AWS Lambda.
 
 **Características:**
+- Workflow reutilizável que deve ser chamado por outros repositórios
 - Suporte a múltiplos runtimes (Python, etc.)
 - Instalação automática de dependências
 - Criação de pacote de deployment
@@ -132,14 +145,13 @@ jobs:
 
 ### Pré-requisitos
 1. Conta AWS com permissões adequadas
-2. Secrets configurados no repositório:
+2. Secrets configurados no repositório que vai usar os workflows:
    - `AWS_ACCESS_KEY_ID`
    - `AWS_SECRET_ACCESS_KEY`
-3. Variables configuradas:
-   - `AWS_REGION` (opcional, padrão: us-east-1)
+   - Outros secrets específicos de cada workflow
 
 ### Configuração de Secrets
-1. Vá para Settings > Secrets and variables > Actions
+1. No **seu repositório** (não neste), vá para Settings > Secrets and variables > Actions
 2. Adicione os secrets necessários para cada workflow
 
 ### Usando os Workflows Reutilizáveis
@@ -155,11 +167,14 @@ on:
 
 jobs:
   deploy-lambda:
-    uses: seu-usuario/github-workflows/.github/workflows/terraform-lambda-deploy.yml@main
+    uses: vcb-do-brasil/github-workflows/.github/workflows/terraform-lambda-deploy.yml@main
     with:
       environment: production
       function_name: my-function
-    secrets: inherit
+      aws_region: us-east-1
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 ```
 
 ## 📦 Estrutura do Projeto
@@ -186,10 +201,22 @@ jobs:
 
 ## 📝 Notas Importantes
 
-- O apply do Terraform só é executado na branch `main`
-- Para PRs, apenas plan é executado e comentado
+### Sobre os Workflows
+- Todos os workflows são **reutilizáveis** (`workflow_call`) e devem ser chamados por outros repositórios
+- Este repositório **não executa workflows automaticamente** quando há mudanças nos arquivos
+- Os workflows aceitam apenas os inputs necessários definidos no `workflow_call`
+- Não há suporte para sobrescrever configurações via variables ou outros mecanismos
 - Todos os workflows usam as versões mais recentes das actions (@v4/@v5)
-- Suporte a workflow manual via `workflow_dispatch` (infraestrutura)
+
+### Sobre o Terraform
+- O apply do Terraform só é executado na branch `main` do repositório que chama o workflow
+- Para PRs, apenas plan é executado e comentado (quando aplicável)
+
+### Proteção da Branch Main
+Para garantir qualidade e segurança:
+- Configure branch protection rules conforme indicado na seção "Requisitos de Configuração"
+- PRs devem ser aprovados antes de merge
+- Workflows devem passar com sucesso antes de atualizar a main
 
 ## 🤝 Contribuindo
 

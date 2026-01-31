@@ -21,13 +21,6 @@ on:
         required: true
       SSH_PRIVATE_KEY:
         required: false
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
 
 jobs:
   deploy-ec2:
@@ -40,7 +33,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION  }}
+          aws-region: ${{ inputs.aws_region }}
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
