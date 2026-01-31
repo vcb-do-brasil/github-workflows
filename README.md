@@ -20,7 +20,7 @@ Para garantir a qualidade do código, configure as seguintes regras de proteçã
    - ✅ Do not allow bypassing the above settings
 
 Estas configurações garantem que:
-- PRs só sejam merged após aprovação
+- PRs só sejam mesclados (merged) após aprovação
 - A main só seja atualizada se os workflows forem executados com sucesso
 
 ## 📋 Workflows Disponíveis
@@ -167,7 +167,7 @@ on:
 
 jobs:
   deploy-lambda:
-    uses: vcb-do-brasil/github-workflows/.github/workflows/terraform-lambda-deploy.yml@main
+    uses: vcb-do-brasil/github-workflows/.github/workflows/terraform-lambda-deploy.yml@v1.0.0
     with:
       environment: production
       function_name: my-function
@@ -176,6 +176,8 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 ```
+
+> **Nota de Segurança**: Recomenda-se usar uma tag versionada (ex: `@v1.0.0`) ou um commit SHA específico ao invés de `@main` para garantir estabilidade e segurança.
 
 ## 📦 Estrutura do Projeto
 
