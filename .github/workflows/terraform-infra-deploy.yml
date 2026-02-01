@@ -11,10 +11,6 @@ on:
         required: false
         type: string
         default: '1.6.0'
-      working_directory:
-        required: false
-        type: string
-        default: '.'
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -25,14 +21,6 @@ jobs:
   terraform:
     name: Terraform Plan and Apply
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: read
-      pull-requests: write
-    
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
     
     steps:
       - name: Checkout code
