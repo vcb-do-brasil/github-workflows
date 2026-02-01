@@ -48,13 +48,16 @@ Workflow completo para gerenciamento de infraestrutura Terraform com CI/CD.
 ```yaml
 jobs:
   deploy:
-    uses: ./.github/workflows/terraform-infra-deploy.yml
+    uses: ./.github/workflows/terraform-ec2-deploy.yml
     with:
-      terraform_version: '1.6.0'
-      aws_region: 'us-east-1'
+      environment: production
+      aws_region: us-east-1
+      instance_type: t3.small
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+```
 
 ### 2. **Terraform EC2 Deploy** (`terraform-ec2-deploy.yml`)
 Workflow reutilizável para deploy de instâncias EC2.
