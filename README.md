@@ -38,7 +38,6 @@ Workflow completo para gerenciamento de infraestrutura Terraform com CI/CD.
 
 **Inputs:**
 - `aws_region` (opcional): Região AWS (padrão: us-east-1)
-- `terraform_version` (opcional): Versão do terraform (padrão: 1.6.0)
 
 **Secrets:**
 - `AWS_ACCESS_KEY_ID` (obrigatório)
