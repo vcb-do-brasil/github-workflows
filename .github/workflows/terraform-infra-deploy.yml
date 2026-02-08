@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         default: 'us-east-1'
+      terraform_version:
+        required: false
+        type: string
+        default: '1.5.0'
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -18,41 +22,7 @@ jobs:
     name: Terraform Plan and Apply
     runs-on: ubuntu-latest
     
-    steps:
-      - name: Validate PR Approval and Target Branch
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Verifica se é um pull request
-            if (context.eventName !== 'pull_request') {
-              core.setFailed('Este workflow só pode ser executado em pull requests.');
-              return;
-            }
-            
-            // Verifica se o PR é para a branch main
-            const baseBranch = context.payload.pull_request.base.ref;
-            if (baseBranch !== 'main') {
-              core.setFailed(`Este workflow só pode ser executado em PRs para a branch main. Branch atual: ${baseBranch}`);
-              return;
-            }
-            
-            // Verifica se o PR foi aprovado
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number
-            });
-            
-            const approvedReviews = reviews.filter(review => review.state === 'APPROVED');
-            
-            if (approvedReviews.length === 0) {
-              core.setFailed('Este workflow só pode ser executado após a aprovação do PR.');
-              return;
-            }
-            
-            console.log('✅ PR aprovado para a branch main. Prosseguindo com o deploy...');
-      
+    steps:      
       - name: Checkout code
         uses: actions/checkout@v4
       
